@@ -542,4 +542,155 @@
                 "As-tu des regrets ?", 
                 "Quelle est ta définition du bonheur ?", 
                 "Si tu pouvais parler à ton 'toi' de 10 ans, que lui dirais-tu ?", 
-           
+                "Penses-tu qu’on peut vraiment changer ?", 
+                "Qu’est-ce que tu aimerais qu’on dise de toi après ta mort ?", 
+                "Tu préfères être aimé ou respecté ?", 
+                "As-tu peur du temps qui passe ?",
+                "Quel est l'outil ou l'application sans lequel tu ne pourrais pas vivre ?",
+                "Si tu devais apprendre une nouvelle compétence en 24h, ce serait laquelle ?",
+                "Quel est le meilleur conseil que l'on t'ait donné ?",
+                "Quelle est la dernière chose que tu as apprise ?",
+                "Quel est le plat que tu cuisines le mieux ?",
+                "Si l'argent n'était pas un problème, où irais-tu en vacances ?",
+                "Quel est ton sport préféré à regarder ?",
+                "Quelle est la plus grande différence entre ton moi d'aujourd'hui et celui d'il y a 5 ans ?",
+                "Quel est le livre que tu as lu le plus de fois ?",
+                "Si tu pouvais revivre un moment de ta vie, lequel choisirais-tu ?",
+                "Quelle est ta boisson préférée ?",
+                "Quel est ton type de cuisine préféré (Italienne, Japonaise, etc.) ?",
+                "As-tu un rituel quotidien ?",
+                "Quel est l'endroit le plus beau que tu aies visité ?",
+                "Quel talent artistique aimerais-tu avoir ?",
+                "Si tu pouvais rendre une espèce animale éteinte, ce serait laquelle ?",
+                "Quelle est la meilleure chose que l'humanité ait inventée ?",
+                "Quel est le bruit que tu détestes le plus ?",
+                "Si tu pouvais parler à n'importe quel personnage historique, qui choisirais-tu ?",
+                "Quelle est la chose la plus étrange dans ton frigo en ce moment ?",
+                "Quel métier détestes-tu le plus faire (ménage, cuisine, administratif, etc.) ?",
+                "As-tu un 'mantra' ou une phrase que tu te répètes souvent ?",
+                "Quel est le meilleur cadeau que tu aies reçu ?",
+                "Si tu devais n'écouter qu'un seul genre musical pour le reste de ta vie ?",
+                "Quelle est ta saison préférée et pourquoi ?",
+                "Quel est le plus grand risque que tu aies pris ?",
+                "Crois-tu aux fantômes ou aux extraterrestres ?",
+                "Quelle est ta plus grande faiblesse ?",
+                "Quel est ton moyen de transport préféré ?",
+                "Quelle est la chose la plus spontanée que tu aies faite ?",
+            ];
+
+            const totalQuestions = allQuestionsList.length; 
+            
+            // --- Logique de Mélange (Réutilisée) ---
+            function shuffleArray(array) {
+                const newArray = [...array];
+                for (let i = newArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                }
+                return newArray;
+            }
+
+            // Génère une permutation fixe (en se basant sur la liste de votre dernier fichier)
+            const questionMap = {};
+            const shuffledQuestions = shuffleArray(allQuestionsList); 
+            for (let i = 0; i < totalQuestions; i++) {
+                questionMap[i + 1] = shuffledQuestions[i];
+            }
+            
+            // --- Éléments du DOM et Fonctions ---
+            const inputElement = document.getElementById('question-input');
+            const questionCard = document.getElementById('question-card');
+            const questionNumberDisplay = document.getElementById('question-number');
+            const questionDisplay = document.getElementById('question-display');
+            const copyButton = document.getElementById('copy-button-top');
+            const messageToast = document.getElementById('message');
+
+            /** Affiche le message Toast */
+            function showToast(text, isError = false) {
+                messageToast.textContent = text;
+                
+                // Style en cas d'erreur
+                if (isError) {
+                    messageToast.style.backgroundColor = '#ff0000'; // Rouge vif pour l'erreur
+                    messageToast.style.borderColor = 'var(--secondary-color)';
+                    messageToast.style.boxShadow = '4px 4px 0px var(--secondary-color)';
+                } else {
+                    messageToast.style.backgroundColor = 'var(--primary-color)';
+                    messageToast.style.borderColor = 'var(--text-color)';
+                    messageToast.style.boxShadow = '4px 4px 0px var(--secondary-color)';
+                }
+
+                messageToast.classList.add('show');
+                
+                // Fait disparaître le message après 2 secondes
+                setTimeout(() => {
+                    messageToast.classList.remove('show');
+                }, 2000);
+            }
+
+            function displayQuestion(number) {
+                const num = parseInt(number);
+                
+                if (num >= 1 && num <= totalQuestions) {
+                    const question = questionMap[num];
+                    
+                    questionNumberDisplay.textContent = `N°${String(num).padStart(2, '0')}`;
+                    questionDisplay.textContent = question;
+                    
+                    if (questionCard.classList.contains('hidden')) {
+                         questionCard.classList.remove('hidden');
+                    }
+                    // Met à jour l'attribut title du bouton pour le copier
+                    copyButton.setAttribute('title', `Copier: N°${num} - ${question}`);
+                } else if (num > 0) {
+                     // Affiche une carte d'erreur si le numéro est hors limite
+                    questionNumberDisplay.textContent = `N°--`;
+                    questionDisplay.textContent = `[ERREUR 404] Question ${num} non trouvée (max: ${totalQuestions}).`;
+                    questionCard.classList.remove('hidden');
+                    copyButton.setAttribute('title', `Erreur de numéro`);
+                } else {
+                    // Cache la carte si l'input est vide ou 0
+                    questionCard.classList.add('hidden');
+                }
+            }
+
+            // --- Écouteur principal de l'input ---
+            inputElement.addEventListener('input', (event) => {
+                const value = event.target.value.trim();
+                displayQuestion(value);
+            });
+            
+            // --- Logique de Copie ---
+            copyButton.addEventListener('click', () => {
+                const textToCopy = questionDisplay.textContent;
+                
+                if (textToCopy.startsWith('[ERREUR') || textToCopy.trim() === '') {
+                    showToast("ERREUR: Impossible de copier une erreur ou un champ vide.", true);
+                    return;
+                }
+                
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        showToast("COPIÉ DANS LE PRESSE-PAPIERS");
+                    }).catch(err => {
+                        showToast("ERREUR: Impossible de copier", true);
+                        console.error('Erreur de copie:', err);
+                    });
+                } else {
+                    // Fallback pour les anciens navigateurs
+                    const textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast("COPIÉ! (Méthode de secours)");
+                }
+            });
+
+            // Initialisation
+            displayQuestion(inputElement.value);
+        });
+    </script>
+</body>
+</html>
