@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu des 130 Questions - Brutalist Moderne V12 (Final Fix)</title>
+    <style>
+        /*
+         * Style Néo-Brutaliste Moderne et Fluide
+         */
+        :root {
+            --primary-color: #ff0055; /* Rose/Magenta Vif et Tranchant */
+            --secondary-color: #00ffaa; /* Cyan/Vert Électrique */
+            --background-color: #1a1a1a; /* Fond Sombre pour le Contraste */
+            --text-color: #f0f0f0;
+            --card-background: #2c2c2c;
+            --border-width: 4px;
+            --border-color: var(--secondary-color);
+            --font-mono: 'Courier New', monospace;
+            --font-display: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-display);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* CORRECTION CLÉ : Augmentation du padding pour éviter toute superposition */
+            padding-bottom: 250px; 
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- Intro Animation Overlay (Styles inchangés) --- */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            pointer-events: all;
+            transition: opacity 0.8s ease-out 2.8s, visibility 0s 3.6s;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #intro-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #intro-text {
+            font-family: var(--font-display);
+            font-size: 5em;
+            font-weight: 900;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+            animation: StanleyAppear 1.5s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+            animation-delay: 0.3s;
+            position: relative;
+            overflow: hidden;
+            padding: 0 15px;
+            text-shadow: 2px 2px var(--primary-color);
+        }
+        #intro-text::before,
+        #intro-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            color: var(--primary-color);
+            animation: StanleyGlitch 1.5s infinite linear alternate-reverse;
+            animation-delay: 0.3s;
+            opacity: 0;
+            pointer-events: none;
+            text-shadow: none;
+        }
+
+        #intro-text::before {
+            left: 2px;
+            text-shadow: -2px 0 var(--primary-color);
+            clip: rect(44px, 450px, 56px, 0);
+            animation: StanleyGlitch 1.8s infinite linear alternate-reverse;
+            animation-delay: 0.3s;
+        }
+
+        #intro-text::after {
+            left: -2px;
+            text-shadow: -2px 0 var(--secondary-color);
+            clip: rect(8px, 450px, 20px, 0);
+            animation: StanleyGlitch 1.3s infinite linear alternate-reverse;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes StanleyAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+                letter-spacing: -2px;
+                color: var(--secondary-color);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05) translateY(-5px);
+                letter-spacing: 5px;
+                color: var(--secondary-color);
+            }
+            75% {
+                color: var(--primary-color);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                letter-spacing: 5px;
+                color: var(--primary-color);
+            }
+        }
+
+        @keyframes StanleyGlitch {
+            0% {
+                transform: translate(0, 0);
+                opacity: 0;
+            }
+            20% {
+                transform: translate(-2px, 2px);
+                opacity: 0.8;
+            }
+            40% {
+                transform: translate(2px, -2px);
+                opacity: 0.8;
+            }
+            60% {
+                transform: translate(-1px, 1px);
+                opacity: 0.8;
+            }
+            80% {
+                transform: translate(1px, -1px);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(0, 0);
+                opacity: 0;
+            }
+        }
+
+        #intro-text .mask-wipe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            transform: translateX(-100%);
+            animation: StanleyMaskWipe 0.5s ease-out forwards;
+            animation-delay: 1.8s;
+        }
+
+        @keyframes StanleyMaskWipe {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+
+        /* --- Content (Initially Hidden) --- */
+        #main-content {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+            transition-delay: 3s;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #main-content.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Global Container --- */
+        .container {
+            width: 90%;
+            max-width: 800px;
+            padding: 20px 0;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        /* --- Header --- */
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.8em;
+            margin-bottom: 0;
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        header p {
+            font-size: 1.1em;
+            color: var(--secondary-color);
+            margin-bottom: 50px; /* Rétabli à 50px pour un bon espacement */
+            font-family: var(--font-mono);
+        }
+
+
+        /* --- Question Card --- */
+        #question-card {
+            background-color: var(--card-background);
+            padding: 30px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            
+            border: var(--border-width) solid var(--secondary-color);
+            box-shadow: 8px 8px 0px var(--primary-color);
+            transform: translate(0, 0);
+            
+            position: relative; 
+        }
+        
+        #question-card:hover {
+             transform: translate(-2px, -2px); 
+        }
+
+        #question-card.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+
+        #question-number {
+            font-size: 1.1em;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            display: block;
+            font-family: var(--font-mono);
+        }
+
+        #question-display {
+            font-size: 1.7em;
+            font-weight: 700;
+            line-height: 1.3;
+            color: var(--text-color);
+            margin: 0 auto; 
+            padding: 10px 0;
+        }
+
+        /* --- Bouton de Copie (Positionné en haut à droite) --- */
+        #copy-button-top {
+            position: absolute;
+            top: 15px; 
+            right: 15px; 
+            
+            background-color: transparent;
+            color: var(--primary-color);
+            border: none;
+            padding: 5px;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: color 0.1s, transform 0.1s;
+            line-height: 1; 
+            z-index: 10; 
+        }
+        
+        #copy-button-top:hover {
+            color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+        
+        #copy-button-top:active {
+            transform: scale(0.9);
+            color: var(--text-color);
+        }
+
+        /* --- Barre de Saisie Fixe (Input Bar) --- */
+        .input-bar-container {
+            /* Positionnement exact demandé */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--background-color);
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.5); 
+            padding: 20px 0 30px 0;
+            display: flex;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .input-bar {
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            
+            background-color: var(--card-background);
+            border: var(--border-width) solid var(--primary-color);
+            padding: 10px 15px;
+            border-radius: 0;
+        }
+
+        #question-input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            font-size: 1.2em;
+            padding: 5px 10px;
+            outline: none;
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            caret-color: var(--secondary-color);
+        }
+
+        .input-bar label {
+            font-weight: bold;
+            color: var(--secondary-color);
+            font-size: 1.2em;
+            padding-right: 10px;
+        }
+
+        /* --- Message de Validation/Copie (Toast Brutaliste) --- */
+        #message {
+            position: fixed;
+            bottom: 150px; 
+            left: 50%;
+            transform: translateX(-50%) translateY(50px); 
+            
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            padding: 10px 20px;
+            font-weight: bold;
+            font-family: var(--font-mono);
+            border: var(--border-width) solid var(--text-color);
+            
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 1001;
+            box-shadow: 4px 4px 0px var(--secondary-color);
+        }
+
+        #message.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0); 
+        }
+        
+        /* --- Fluidité --- */
+        @media (max-width: 768px) {
+            #intro-text {
+                font-size: 3.5em;
+            }
+            header h1 {
+                font-size: 2em;
+            }
+            #question-display {
+                font-size: 1.5em;
+            }
+            .input-bar {
+                max-width: 95%;
+            }
+            body {
+                padding-bottom: 200px; /* Ajustement mobile */
+            }
+        }
+        @media (max-width: 480px) {
+            #intro-text {
+                font-size: 2.5em;
+                letter-spacing: 2px;
+            }
+            header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="intro-overlay">
+        <div id="intro-text" data-text="STANLEY">STANLEY<div class="mask-wipe"></div></div>
+    </div>
+
+    <div id="main-content">
+        <div class="container">
+            <header>
+                <h1><span style="color: var(--secondary-color);">JEU</span> Q-130</h1>
+                <p>// ENTREZ UN NUMÉRO DE 1 À 130 DANS LA BARRE CI-DESSOUS</p>
+            </header>
+
+            <div id="question-card" class="hidden">
+                <span id="question-number">N°00</span>
+                
+                <button id="copy-button-top" title="Copier la question">
+                    &#x2398;
+                </button>
+                
+                <div id="question-display"></div>
+            </div>
+        </div>
+
+        <div class="input-bar-container">
+            <div class="input-bar">
+                <label for="question-input">N°</label>
+                <input type="number" id="question-input" placeholder="1 - 130" min="1" max="130" autofocus>
+            </div>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- GESTION DE L'ANIMATION D'INTRODUCTION ---
+            const introOverlay = document.getElementById('intro-overlay');
+            const mainContent = document.getElementById('main-content');
+            const introText = document.getElementById('intro-text');
+
+            introText.setAttribute('data-text', 'STANLEY');
+
+            setTimeout(() => {
+                introOverlay.classList.add('hidden');
+                mainContent.classList.add('active');
+            }, 3600);
+
+            // --- LISTE DES QUESTIONS PERMUTÉES (ORDRE FIXÉ) ---
+            const allQuestionsList = [
+                "Si tu pouvais être un animal pendant une journée, lequel choisirais-tu ?", 
+                "Tu préfères avoir des bras de 2 mètres ou des jambes de 30 cm ?", 
+                "Quelle est la pire chose que tu pourrais dire pendant un premier rendez-vous ?", 
+                "Quel super-pouvoir complètement inutile aimerais-tu avoir ?", 
+                "Plutôt parler comme un robot ou marcher comme un crabe pour toujours ?", 
+                "Quelle est la chose la plus étrange que tu aies mangée ?", 
+                "Tu préfères avoir un nez de clown ou des pieds de palme pour la vie ?", 
+                "Si tu devais vivre dans un film, lequel tu choisirais ?", 
+                "Tu préfères être poursuivi par un canard géant ou 100 mini chevaux ?", 
+                "Quel est ton talent caché le plus inutile ?", 
+                "Quelle est ta plus grande peur irrationnelle ?", 
+                "Si tu gagnais 1 million d’euros demain, tu fais quoi ?", 
+                "Quelle est la chose dont tu es le plus fier(e) ?", 
+                "Quelle personne célèbre aimerais-tu rencontrer ?", 
+                "Quel est ton plus grand rêve ?", 
+                "Si tu pouvais changer une seule chose chez toi, ce serait quoi ?", 
+                "As-tu une manie bizarre que personne ne connaît ?", 
+                "Quel est ton plus beau souvenir d’enfance ?", 
+                "Qu’est-ce qui te fait pleurer à coup sûr ?", 
+                "Quelle est ta plus grande réussite ?", 
+                "Quelle est la pire excuse que tu aies donnée pour éviter un rendez-vous ?", 
+                "Quel est le mensonge le plus idiot que tu aies dit ?", 
+                "As-tu déjà eu un fou rire dans un moment très inapproprié ?", 
+                "Tu préfères ne plus jamais pouvoir rire ou ne plus jamais pouvoir chanter ?", 
+                "Quelle est la chanson que tu chantes sous la douche (mais que tu nies en public) ?", 
+                "Tu préfères vivre sans téléphone ou sans chocolat ?", 
+                "Si tu étais un objet, tu serais quoi ?", 
+                "As-tu déjà mangé quelque chose tombé par terre ?", 
+                "Quelle est ta pire honte publique ?", 
+                "Si tu devais avoir un surnom ridicule, ce serait quoi ?", 
+                "Ton crush de collège ?", 
+                "As-tu déjà eu le cœur brisé ?", 
+                "C’est quoi pour toi l’amour ?", 
+                "Quelle est la pire chose qu’un ex ait faite ?", 
+                "Plutôt jaloux(se) ou trop cool ?", 
+                "Tu crois au coup de foudre ?", 
+                "Quel est ton type idéal ?", 
+                "Le pire rendez-vous de ta vie ?", 
+                "As-tu déjà stalké quelqu’un sur les réseaux ?", 
+                "Tu préfères être seul(e) toute ta vie ou toujours mal accompagné(e) ?", 
+                "Quelle est la chose la plus folle que tu aies faite ?", 
+                "As-tu un secret que personne ici ne connaît ?", 
+                "As-tu déjà triché à un jeu ?", 
+                "Quelle est ta plus grosse bêtise ?", 
+                "As-tu déjà été amoureux(se) d’un(e) prof ?", 
+                "Raconte un mensonge que tu as dit à tes parents.", 
+                "As-tu déjà envoyé un message au mauvais destinataire ?", 
+                "As-tu déjà fait quelque chose dont tu es très gêné(e) ?", 
+                "Quelle est la plus grosse honte de ta vie ?", 
+                "As-tu déjà été pris(e) en train de mentir ?", 
+                "Ton film préféré ?", 
+                "Une série que tu as honte d’aimer ?", 
+                "Tu préfères Marvel ou DC ?", 
+                "Une chanson que tu écoutes en boucle ?", 
+                "Si tu devais vivre dans un jeu vidéo ?", 
+                "Quel personnage de fiction te ressemble le plus ?", 
+                "Ton guilty pleasure musical ?", 
+                "Si tu pouvais être une star, qui ?", 
+                "Team Harry Potter ou Seigneur des Anneaux ?", 
+                "Un film que tout le monde aime sauf toi ?", 
+                "Peut-on être ami avec son ex ?", 
+                "Faut-il toujours dire la vérité ?", 
+                "Tu préfères être riche ou heureux ?", 
+                "Le télétravail, pour ou contre ?", 
+                "Est-ce que tout arrive pour une raison ?", 
+                "Pour ou contre les spoilers ?", 
+                "Les réseaux sociaux : plutôt toxiques ou utiles ?", 
+                "Peut-on rire de tout ?", 
+                "Tu préfères la vie en ville ou à la campagne ?", 
+                "Est-ce que l’argent fait vraiment le bonheur ?", 
+                "Tu préfères avoir toujours chaud ou toujours froid ?", 
+                "Ne plus jamais dormir ou ne plus jamais manger ?", 
+                "Être célèbre et détesté ou inconnu et adoré ?", 
+                "Perdre ton téléphone ou ton portefeuille ?", 
+                "Vivre dans le passé ou dans le futur ?", 
+                "Parler toutes les langues ou comprendre tous les animaux ?", 
+                "Ne plus jamais avoir Internet ou ne plus jamais voir tes amis ?", 
+                "Lire dans les pensées ou voyager dans le temps ?", 
+                "Être le/la plus drôle ou le/la plus intelligent(e) ?", 
+                "Avoir un clone ou un robot personnel ?", 
+                "Si tu pouvais changer de vie une journée, tu choisis qui ?", 
+                "Quel serait le nom de ton livre autobiographique ?", 
+                "Si tu inventais une appli révolutionnaire, ce serait quoi ?", 
+                "Si tu devais créer ta propre émission TV ?", 
+                "Un métier que tu rêverais d’essayer ?", 
+                "Tu es président pour une journée, tu fais quoi ?", 
+                "Une invention folle que tu aimerais voir exister ?", 
+                "Un endroit dans le monde où tu aimerais vivre ?", 
+                "Une chose que tu aimerais savoir faire parfaitement ?", 
+                "Quel serait ton nom de scène ?", 
+                "As-tu déjà changé radicalement d’avis sur quelque chose ?", 
+                "Quelle valeur est la plus importante pour toi ?", 
+                "Qu’est-ce que la liberté pour toi ?", 
+                "As-tu des regrets ?", 
+                "Quelle est ta définition du bonheur ?", 
+                "Si tu pouvais parler à ton 'toi' de 10 ans, que lui dirais-tu ?", 
+           
