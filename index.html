@@ -446,7 +446,7 @@
                 mainContent.classList.add('active');
             }, 3600);
 
-            // --- LISTE DES QUESTIONS PERMUTÉES (ORDRE FIXÉ) ---
+            // --- LISTE DES QUESTIONS FIXES ---
             const allQuestionsList = [
                 "Si tu pouvais être un animal pendant une journée, lequel choisirais-tu ?",
                 "Tu préfères avoir des bras de 2 mètres ou des jambes de 30 cm ?",
@@ -459,7 +459,7 @@
                 "Tu préfères être poursuivi par un canard géant ou 100 mini chevaux ?",
                 "Quel est ton talent caché le plus inutile ?",
                 "Quelle est ta plus grande peur irrationnelle ?",
-                "Si tu gagnais 1 million d’euros demain, tu fais quoi ?",
+                "Si tu gagnais 1 million d’euros demain, tu fais quoi ?", // Question 12, fixe
                 "Quelle est la chose dont tu es le plus fier(e) ?",
                 "Quelle personne célèbre aimerais-tu rencontrer ?",
                 "Quel est ton plus grand rêve ?",
@@ -582,20 +582,10 @@
 
             const totalQuestions = allQuestionsList.length;
 
-            // --- Logique de Mélange ---
-            function shuffleArray(array) {
-                const newArray = [...array];
-                for (let i = newArray.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-                }
-                return newArray;
-            }
-
+            // --- Création de la map des questions (fixe, sans mélange) ---
             const questionMap = {};
-            const shuffledQuestions = shuffleArray(allQuestionsList);
             for (let i = 0; i < totalQuestions; i++) {
-                questionMap[i + 1] = shuffledQuestions[i];
+                questionMap[i + 1] = allQuestionsList[i];
             }
 
             // --- Éléments du DOM et Fonctions ---
